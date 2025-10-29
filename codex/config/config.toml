@@ -1,28 +1,16 @@
 # Codex runtime configuration
 
-[model]
-name = "gpt-4o-mini"
-provider = "openai"
+model = "gpt-4o-mini"
+model_provider = "openai"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 
-[policy]
-approval = "never"
+# Execution environment - allow network and specific commands
+[sandbox_workspace_write]
+network_access = true
 
-[timeouts]
-TotalSeconds = 600
+[projects."/ws"]
+trust_level = "trusted"
 
-[workspace]
-config = "codex/config/workspace.toml"
-
-[execution]
-allowed = [
-  "bash", "diff3", "git", "merge-file", "patch", "sed", "awk", "cp", "mv", "rm", "find"
-]
-
-[prompts]
-system = """
-Use /ws/base as the ancestor. Merge /ws/right into /ws/out (pre-seeded from /ws/left).
-Edit only under /ws/out. Remove all conflict markers. Minimize the diff.
-
-Before finishing, scan for conflict markers: <<<<<<<, =======, >>>>>>>.
-If any are present, declare failure (non-zero exit).
-"""
+[projects."/ws/out"]
+trust_level = "trusted"

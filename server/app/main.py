@@ -86,7 +86,7 @@ async def webhook(
 			"RESBOT_MAX_REPO_MB": os.environ.get("RESBOT_MAX_REPO_MB", "2000"),
 			"RESBOT_MAX_EXEC_SECONDS": os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600"),
 			"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
-			"CODEX_CONFIG_PATH": os.environ.get("CODEX_CONFIG_PATH", "codex/config/config.toml"),
+			"CODEX_CONFIG_DIR": os.environ.get("CODEX_CONFIG_DIR", "/app/codex/config"),
 			"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
 		}
 		spawn_runner(envs)
@@ -117,7 +117,7 @@ async def webhook(
 			"RESBOT_MAX_REPO_MB": os.environ.get("RESBOT_MAX_REPO_MB", "2000"),
 			"RESBOT_MAX_EXEC_SECONDS": os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600"),
 			"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
-			"CODEX_CONFIG_PATH": os.environ.get("CODEX_CONFIG_PATH", "codex/config/config.toml"),
+			"CODEX_CONFIG_DIR": os.environ.get("CODEX_CONFIG_DIR", "/app/codex/config"),
 			"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
 		}
 		spawn_runner(envs)

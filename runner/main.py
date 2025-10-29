@@ -217,17 +217,44 @@ def main() -> None:
 		rsync_left_to_out(ws["left"], ws["out"], cfg.max_file_mb)
 
 		# Codex integration
+		# Codex reads config from $CODEX_HOME/config.toml (defaults to ~/.codex/config.toml)
+		# Set CODEX_HOME to point to our config directory
 		codex_bin = os.environ.get("CODEX_BIN", "codex")
-		config_path = os.environ.get("CODEX_CONFIG_PATH", "codex/config/config.toml")
+		config_dir = os.environ.get("CODEX_CONFIG_DIR", "/app/codex/config")
+		codex_env = os.environ.copy()
+		codex_env["CODEX_HOME"] = config_dir
+		
+		# System prompt for merge resolution
+		system_prompt = (
+			"Use /ws/base as the ancestor. Merge /ws/right into /ws/out (pre-seeded from /ws/left). "
+			"Edit only under /ws/out. Remove all conflict markers. Minimize the diff. "
+			"Before finishing, scan for conflict markers: <<<<<<<, =======, >>>>>>>. "
+			"If any are present, declare failure (non-zero exit)."
+		)
+		
 		try:
-			# System prompt in TOML
-			run([codex_bin, "run", "--config", config_path], cwd=Path("/app"))
+			# Use codex exec for non-interactive execution; allow edits and skip git repo check
+			res = subprocess.run(
+				[codex_bin, "exec", "--full-auto", "--skip-git-repo-check", system_prompt],
+				cwd=Path("/ws/out"),
+				check=True,
+				capture_output=True,
+				text=True,
+				env=codex_env,
+			)
 		except subprocess.CalledProcessError as e:
+			# Capture stderr/stdout for better error reporting
+			err_msg = f"Codex failed (exit={e.returncode})"
+			if e.stderr:
+				err_msg += f"\nStderr: {e.stderr[:500]}"
+			if e.stdout:
+				err_msg += f"\nStdout: {e.stdout[:500]}"
+			err_msg += f"\nbase={base_sha} head={head_sha} merge-base={merge_base}"
 			post_pr_comment(
 				token,
 				cfg.repo_full,
 				cfg.pr_number,
-				f"Codex failed (exit={e.returncode}). Aborting. base={base_sha} head={head_sha} merge-base={merge_base}",
+				err_msg,
 			)
 			return
 
