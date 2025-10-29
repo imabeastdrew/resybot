@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resybot"
+version = "0.1.0"
+description = "Resolve bot: webhook server and runner"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.114.1",
+    "uvicorn[standard]==0.30.6",
+    "requests==2.32.3",
+    "PyJWT[crypto]==2.9.0",
+    "docker==7.1.0",
+]
+
+

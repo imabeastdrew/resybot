@@ -1,0 +1,28 @@
+# Codex runtime configuration
+
+[model]
+name = "gpt-4o-mini"
+provider = "openai"
+
+[policy]
+approval = "never"
+
+[timeouts]
+TotalSeconds = 600
+
+[workspace]
+config = "codex/config/workspace.toml"
+
+[execution]
+allowed = [
+  "bash", "diff3", "git", "merge-file", "patch", "sed", "awk", "cp", "mv", "rm", "find"
+]
+
+[prompts]
+system = """
+Use /ws/base as the ancestor. Merge /ws/right into /ws/out (pre-seeded from /ws/left).
+Edit only under /ws/out. Remove all conflict markers. Minimize the diff.
+
+Before finishing, scan for conflict markers: <<<<<<<, =======, >>>>>>>.
+If any are present, declare failure (non-zero exit).
+"""

@@ -1,0 +1,34 @@
+# Env files
+.env
+*.env
+*.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.envrc
+.python-version
+
+# Caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Editors/OS
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Local work dirs (if created during ad-hoc runs)
+ws/
+
