@@ -5,12 +5,11 @@ model_provider = "openai"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 
-# Execution environment - allow network and specific commands
-[sandbox_workspace_write]
-network_access = true
+# Force API key authentication
+forced_login_method = "api"
 
-[projects."/ws"]
-trust_level = "trusted"
+[timeouts]
+TotalSeconds = 600
 
 [projects."/ws/out"]
 trust_level = "trusted"

@@ -1,22 +1,4 @@
 version = 1
 
-[mounts.base]
-path = "/ws/base"
-mode = "ro"
-
-[mounts.right]
-path = "/ws/right"
-mode = "ro"
-
-[mounts.out]
-path = "/ws/out"
-mode = "rw"
-
-[exec]
-allowlist = ["bash", "diff3", "git", "merge-file", "patch", "sed", "awk", "cp", "mv", "rm", "find"]
-
-[policy]
-approval = "never"
-
-[timeouts]
-total_seconds = 600
+[projects."/ws/out"]
+trust_level = "trusted"

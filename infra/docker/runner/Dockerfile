@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     UV_LINK_MODE=copy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git rsync curl jq ca-certificates python3 python3-pip tar && \
+    git bash coreutils findutils ripgrep grep sed rsync curl jq ca-certificates \
+    python3 python3-pip tar nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 # Install uv
@@ -41,9 +42,6 @@ RUN uv sync --no-dev
 # Runner code
 COPY runner ./runner
 COPY codex ./codex
-
-# Workspace directories
-RUN mkdir -p /ws/base /ws/left /ws/right /ws/out
 
 ENTRYPOINT ["uv", "run", "python3", "runner/main.py"]
 

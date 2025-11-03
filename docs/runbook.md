@@ -3,6 +3,7 @@
 ## Rerun a job
 - Comment on the PR: `/resbot resolve`
 - Server enqueues a new runner container for that PR.
+- If the PR has no conflicts, the runner exits immediately (no Codex, no push).
 
 ## Abort a running job
 - Stop the runner container on the host (e.g., `docker ps` then `docker stop <id>`)
@@ -12,3 +13,9 @@
 - 401 from webhook: verify `GITHUB_WEBHOOK_SECRET` matches the GitHub App setting.
 - 403 from GitHub API: verify installation exists on target repo and app permissions.
 - Clone failures: repo is large or rate limited; increase `RESBOT_MAX_EXEC_SECONDS` or retry.
+- Nothing happens on comment: PR is clean; only conflicted PRs are processed. Verify PR `mergeable_state` is `dirty`.
+
+## Where to find artifacts (local docker)
+- Workspace: volume `resbot_ws` mounted at `/ws`
+- Codex state/logs: volume `codex_state` mounted at `/app/codex/state`
+- Codex config: volume `codex_config` mounted at `/app/codex/config`

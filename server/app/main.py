@@ -31,9 +31,16 @@ def spawn_runner(envs: Dict[str, str]) -> None:
 	import docker
 	client = docker.from_env()
 	runner_image = os.environ.get("RESBOT_RUNNER_IMAGE", "resbot/runner:latest")
-	container = client.containers.run(
+	# Mount persistent volumes so repo workspace and Codex state are inspectable
+	volumes = {
+		"resbot_ws": {"bind": "/ws", "mode": "rw"},
+		"codex_state": {"bind": "/app/codex/state", "mode": "rw"},
+		"codex_config": {"bind": "/app/codex/config", "mode": "rw"},
+	}
+	client.containers.run(
 		image=runner_image,
 		environment=envs,
+		volumes=volumes,
 		remove=True,
 		detach=False,
 	)
@@ -72,6 +79,17 @@ async def webhook(
 		pr_number = int(pr.get("number"))
 		base_ref = pr.get("base", {}).get("ref")
 		head_ref = pr.get("head", {}).get("ref")
+		# SHAs and head repo URL for exact merge reproduction (works for forks)
+		base_sha = pr.get("base", {}).get("sha") or ""
+		head_sha = pr.get("head", {}).get("sha") or ""
+		head_clone_url = pr.get("head", {}).get("repo", {}).get("clone_url") or ""
+		# Only act when the PR currently has conflicts
+		installation_token = get_installation_token(app_id, int(installation_id))
+		owner, repo = repo_full.split("/", 1)
+		pr_fresh = get_pull_request(installation_token, owner, repo, pr_number)
+		mergeable_state = pr_fresh.get("mergeable_state")  # 'dirty' => conflicts present
+		if mergeable_state != "dirty":
+			return {"status": "skipped", "reason": "no_conflicts"}
 		# Always pass the actual PEM contents to the runner (supports FILE in server only)
 		pem_for_runner = _load_private_key_from_env()
 		envs = {
@@ -80,13 +98,18 @@ async def webhook(
 			"PR_NUMBER": str(pr_number),
 			"BASE_REF": base_ref or "",
 			"HEAD_REF": head_ref or "",
+			"BASE_SHA": base_sha,
+			"HEAD_SHA": head_sha,
+			"HEAD_CLONE_URL": head_clone_url,
 			"INSTALLATION_ID": str(installation_id),
 			"GITHUB_APP_ID": app_id,
 			"GITHUB_PRIVATE_KEY": pem_for_runner,
 			"RESBOT_MAX_REPO_MB": os.environ.get("RESBOT_MAX_REPO_MB", "2000"),
 			"RESBOT_MAX_EXEC_SECONDS": os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600"),
 			"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
-			"CODEX_CONFIG_DIR": os.environ.get("CODEX_CONFIG_DIR", "/app/codex/config"),
+			"CODEX_HOME": os.environ.get("CODEX_HOME", "/app/codex/config"),
+			"XDG_STATE_HOME": os.environ.get("XDG_STATE_HOME", "/app/codex/state"),
+			"RESBOT_KEEP_WS": os.environ.get("RESBOT_KEEP_WS", "false"),
 			"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
 		}
 		spawn_runner(envs)
@@ -104,6 +127,9 @@ async def webhook(
 		pr = get_pull_request(installation_token, owner, repo, pr_number)
 		base_ref = pr.get("base", {}).get("ref")
 		head_ref = pr.get("head", {}).get("ref")
+		base_sha = pr.get("base", {}).get("sha") or ""
+		head_sha = pr.get("head", {}).get("sha") or ""
+		head_clone_url = pr.get("head", {}).get("repo", {}).get("clone_url") or ""
 		pem_for_runner = _load_private_key_from_env()
 		envs = {
 			"REPO_FULL": repo_full,
@@ -111,14 +137,19 @@ async def webhook(
 			"PR_NUMBER": str(pr_number),
 			"BASE_REF": base_ref or "",
 			"HEAD_REF": head_ref or "",
+			"BASE_SHA": base_sha,
+			"HEAD_SHA": head_sha,
+			"HEAD_CLONE_URL": head_clone_url,
 			"INSTALLATION_ID": str(installation_id),
 			"GITHUB_APP_ID": app_id,
 			"GITHUB_PRIVATE_KEY": pem_for_runner,
 			"RESBOT_MAX_REPO_MB": os.environ.get("RESBOT_MAX_REPO_MB", "2000"),
 			"RESBOT_MAX_EXEC_SECONDS": os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600"),
-			"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
-			"CODEX_CONFIG_DIR": os.environ.get("CODEX_CONFIG_DIR", "/app/codex/config"),
-			"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
+		"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
+		"CODEX_HOME": os.environ.get("CODEX_HOME", "/app/codex/config"),
+		"XDG_STATE_HOME": os.environ.get("XDG_STATE_HOME", "/app/codex/state"),
+			"RESBOT_KEEP_WS": os.environ.get("RESBOT_KEEP_WS", "false"),
+		"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
 		}
 		spawn_runner(envs)
 		return {"status": "queued"}
