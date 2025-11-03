@@ -145,11 +145,11 @@ async def webhook(
 			"GITHUB_PRIVATE_KEY": pem_for_runner,
 			"RESBOT_MAX_REPO_MB": os.environ.get("RESBOT_MAX_REPO_MB", "2000"),
 			"RESBOT_MAX_EXEC_SECONDS": os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600"),
-		"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
-		"CODEX_HOME": os.environ.get("CODEX_HOME", "/app/codex/config"),
-		"XDG_STATE_HOME": os.environ.get("XDG_STATE_HOME", "/app/codex/state"),
+			"CODEX_BIN": os.environ.get("CODEX_BIN", "codex"),
+			"CODEX_HOME": os.environ.get("CODEX_HOME", "/app/codex/config"),
+			"XDG_STATE_HOME": os.environ.get("XDG_STATE_HOME", "/app/codex/state"),
 			"RESBOT_KEEP_WS": os.environ.get("RESBOT_KEEP_WS", "false"),
-		"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
+			"OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
 		}
 		spawn_runner(envs)
 		return {"status": "queued"}
@@ -157,7 +157,12 @@ async def webhook(
 	raise HTTPException(status_code=200, detail="Unhandled event")
 
 
-if __name__ == "__main__":
+def run() -> None:
 	import uvicorn
-	uvicorn.run("server.app.main:app", host="0.0.0.0", port=8000, reload=False)
+	uvicorn.run("resbot.server.app.main:app", host="0.0.0.0", port=8000, reload=False)
+
+
+if __name__ == "__main__":
+	run()
+
 

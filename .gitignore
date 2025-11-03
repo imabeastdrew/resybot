@@ -15,6 +15,7 @@ __pycache__/
 venv/
 .envrc
 .python-version
+/dist
 
 # Caches
 .mypy_cache/
@@ -29,6 +30,6 @@ venv/
 # Logs
 *.log
 
-# Local work dirs (if created during ad-hoc runs)
+# Local work dirs
 ws/
 

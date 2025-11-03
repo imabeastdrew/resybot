@@ -257,7 +257,7 @@ def setup_conflicted_repo(
 def check_for_conflict_markers(out_dir: Path) -> bool:
 	"""Check if any conflict markers remain in the repository."""
 	try:
-		result = run(["grep", "-r", "-l", "-E", "^<<<<<<<|^=======|^>>>>>>>"] ,
+		result = run(["grep", "-r", "-l", "-E", "^<<<<<<<|^=======|^>>>>>>>" ] ,
 					cwd=out_dir)
 		return len(result.strip()) > 0
 	except subprocess.CalledProcessError:
@@ -268,7 +268,7 @@ def check_for_conflict_markers(out_dir: Path) -> bool:
 def _extract_last_code_block(text: str) -> str:
 	"""Return the content of the last fenced code block in 'text', or ''.
 
-	Matches ```<lang>?\n...\n```. Language tag is optional.
+	Matches ```<lang>?\n...\n```.
 	"""
 	try:
 		matches = list(re.finditer(r"```(?:[a-zA-Z0-9_+-]+)?\n([\s\S]*?)\n```", text))
@@ -301,36 +301,36 @@ def try_apply_codex_suggested_content(codex_stdout: str, out_dir: Path, conflict
 
 
 def run_optional_hooks(out_dir: Path) -> None:
-    """Run optional post-resolution hooks if enabled."""
-    # Install dependencies
-    install_cmd = os.environ.get("INSTALL_CMD")
-    if os.environ.get("ENABLE_DEPS_INSTALL", "").lower() == "true" and install_cmd:
-        print(f"Running install command: {install_cmd}")
-        try:
-            run(install_cmd.split(), cwd=out_dir)
-        except subprocess.CalledProcessError as e:
-            print(f"Install command failed: {e}")
-            raise
+	"""Run optional post-resolution hooks if enabled."""
+	# Install dependencies
+	install_cmd = os.environ.get("INSTALL_CMD")
+	if os.environ.get("ENABLE_DEPS_INSTALL", "").lower() == "true" and install_cmd:
+		print(f"Running install command: {install_cmd}")
+		try:
+			run(install_cmd.split(), cwd=out_dir)
+		except subprocess.CalledProcessError as e:
+			print(f"Install command failed: {e}")
+			raise
 
-    # Format code
-    format_cmd = os.environ.get("FORMAT_CMD")
-    if os.environ.get("ENABLE_FORMAT", "").lower() == "true" and format_cmd:
-        print(f"Running format command: {format_cmd}")
-        try:
-            run(format_cmd.split(), cwd=out_dir)
-        except subprocess.CalledProcessError as e:
-            print(f"Format command failed: {e}")
-            raise
+	# Format code
+	format_cmd = os.environ.get("FORMAT_CMD")
+	if os.environ.get("ENABLE_FORMAT", "").lower() == "true" and format_cmd:
+		print(f"Running format command: {format_cmd}")
+		try:
+			run(format_cmd.split(), cwd=out_dir)
+		except subprocess.CalledProcessError as e:
+			print(f"Format command failed: {e}")
+			raise
 
-    # Run tests
-    test_cmd = os.environ.get("TEST_CMD")
-    if os.environ.get("ENABLE_TESTS", "").lower() == "true" and test_cmd:
-        print(f"Running test command: {test_cmd}")
-        try:
-            run(test_cmd.split(), cwd=out_dir)
-        except subprocess.CalledProcessError as e:
-            print(f"Test command failed: {e}")
-            raise
+	# Run tests
+	test_cmd = os.environ.get("TEST_CMD")
+	if os.environ.get("ENABLE_TESTS", "").lower() == "true" and test_cmd:
+		print(f"Running test command: {test_cmd}")
+		try:
+			run(test_cmd.split(), cwd=out_dir)
+		except subprocess.CalledProcessError as e:
+			print(f"Test command failed: {e}")
+			raise
 
 
 def post_pr_comment(token: str, repo_full: str, pr_number: int, body: str) -> None:
@@ -404,7 +404,7 @@ def main() -> None:
 		if not had_conflicts:
 			return
 
-        # Codex integration - run in the conflicted repo (only when conflicts existed)
+		# Codex integration - run in the conflicted repo (only when conflicts existed)
 		codex_bin = os.environ.get("CODEX_BIN", "codex")
 		codex_home = os.environ.get("CODEX_HOME", "/app/codex/config")
 		xdg_state_home = os.environ.get("XDG_STATE_HOME", "/app/codex/state")
@@ -565,8 +565,8 @@ def main() -> None:
 			)
 			return
 
-        # We always proceed to commit/push for clean merges (base..head has changes)
-        # and for conflicted merges that are now fully resolved.
+		# We always proceed to commit/push for clean merges (base..head has changes)
+		# and for conflicted merges that are now fully resolved.
 
 		# Commit the resolved changes on the current branch before creating new branch
 		# This preserves the resolution so we can apply it to the new branch. We
@@ -638,4 +638,5 @@ def main() -> None:
 
 if __name__ == "__main__":
 	main()
+
 

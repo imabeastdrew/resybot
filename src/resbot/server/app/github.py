@@ -9,22 +9,11 @@ import requests
 
 
 def _load_private_key_from_env() -> str:
-	file_path = os.environ.get("GITHUB_PRIVATE_KEY_FILE", "").strip()
-	if file_path:
-		try:
-			with open(file_path, "r", encoding="utf-8") as fh:
-				key = fh.read().strip()
-		except FileNotFoundError as exc:
-			raise RuntimeError(f"GITHUB_PRIVATE_KEY_FILE not found: {file_path}") from exc
-	else:
-		key = os.environ.get("GITHUB_PRIVATE_KEY", "").strip()
-		if not key:
-			raise RuntimeError("GITHUB_PRIVATE_KEY or GITHUB_PRIVATE_KEY_FILE must be set")
-		# Support keys pasted without newlines (\n escaped)
-		if "BEGIN" in key and "\\n" in key and "\n" not in key:
-			key = key.replace("\\n", "\n")
+	key = os.environ.get("GITHUB_PRIVATE_KEY", "").strip()
+	if not key:
+		raise RuntimeError("GITHUB_PRIVATE_KEY must be set")
 	return key
-
+	
 
 def create_app_jwt(app_id: str) -> str:
 	private_key = _load_private_key_from_env()
@@ -58,4 +47,5 @@ def get_pull_request(token: str, owner: str, repo: str, pr_number: int) -> Dict[
 	})
 	resp.raise_for_status()
 	return resp.json()
+
 
