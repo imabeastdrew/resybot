@@ -1,6 +1,6 @@
 ## Resybot
 
-Resolve Bot (**resybot**) is an Agent that automatically resolves merge conflicts in pull requests by reproducing the exact Git merge in a runner container and using Codex to fix conflicts in-place. It only runs on conflicted PRs (`mergeable_state == "dirty"`) and pushes a resolution commit back to the PR head branch.
+(**resybot**) is an Agent that automatically resolves merge conflicts in pull requests by reproducing the merge and using Codex to fix conflicts. It only runs on conflicted PRs (`mergeable_state == "dirty"`) and pushes a resolution commit back to the PR head branch.
 
 ## Installation
 
@@ -54,10 +54,10 @@ For Docker-based setups, CI images, and advanced configuration, see the docs bel
 
 ## Documentation
 
-- **Ops: Deploy & Run**: architecture, Docker images, environment variables, and GitHub App/webhook setup (`docs/ops.md`).
-- **Contributing**: how to set up a dev environment, propose changes, and open PRs (`docs/contributing.md`).
-- **Runbook**: how to rerun or abort jobs, troubleshoot common issues, and find artifacts (`docs/runbook.md`).
-- **Limits & Filters**: repository size/time limits, path filters, and exact-merge behavior (`docs/limits.md`).
-- **License**: MIT License (`LICENSE`).
+- **Ops: Deploy & Run**: architecture, Docker images, environment variables, and GitHub App/webhook setup ([`docs/ops.md`](docs/ops.md)).
+- **Contributing**: how to set up a dev environment, propose changes, and open PRs ([`docs/contributing.md`](docs/contributing.md)).
+- **Runbook**: how to rerun or abort jobs, troubleshoot common issues, and find artifacts ([`docs/runbook.md`](docs/runbook.md)).
+- **Limits & Filters**: repository size/time limits, path filters, and exact-merge behavior ([`docs/limits.md`](docs/limits.md)).
+- **License**: MIT License ([`LICENSE`](LICENSE)).
 
 
