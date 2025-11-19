@@ -10,7 +10,7 @@ on:
       image_name:
         description: Full image name to push
         required: false
-        default: ghcr.io/${{ github.repository_owner }}/resbot-runner
+        default: ghcr.io/imabeastdrew/resbot-runner
   schedule:
     - cron: '0 6 * * *'
 

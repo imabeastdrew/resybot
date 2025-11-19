@@ -1,10 +1,10 @@
 ## Resybot
 
-An Agent that automatically resolves merge conflicts in pull requests by reproducing the merge and using Codex to fix conflicts. It only runs on conflicted PRs (`mergeable_state == "dirty"`) and pushes a resolution commit back to the PR head branch.
+An Agent that automatically resolves merge conflicts in pull requests by reproducing the merge, using Codex to fix conflicts. It only runs on conflicted PRs and pushes a resolution commit back to the PR head branch.
 
 ## Installation
 
-Resybot is not yet published to PyPI. For now, install from source:
+Resybot is not yet published to PyPI, nor the GitHub Marketplace. For now, install from source:
 
 ```bash
 git clone https://github.com/<your-org>/resbot.git
