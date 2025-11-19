@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Resybot uses an exact-git workflow and only acts on conflicted PRs:
+Resybot uses a git workflow and only acts on conflicted PRs:
 - Server enqueues a run only when the PR `mergeable_state` is `dirty` (conflicts)
 - Runner clones the PR repository directly to `/ws/out` as a real Git working directory
 - Reproduces the merge by checking out the base commit and attempting to merge the head commit
