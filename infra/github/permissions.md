@@ -6,7 +6,7 @@
 - Metadata: Read
 
 ## Webhooks
-- Subscribed events: `pull_request`, `issue_comment`
+- Subscribed events: `issue_comment`
 
 ## Installation
 - Install on target organization/repositories.

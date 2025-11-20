@@ -1,6 +1,6 @@
 # Codex runtime configuration
 
-model = "gpt-4o-mini"
+model = "o3-mini"
 model_provider = "openai"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"

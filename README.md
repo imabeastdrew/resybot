@@ -50,8 +50,9 @@ resbot-server
 - **Trigger Resybot on a conflicted PR**:
   - Install the GitHub App on a repository.
   - Open a pull request that has merge conflicts with the base branch.
-  - Comment `/resbot resolve` on the PR.
-  - Resybot will reproduce the merge, attempt to resolve conflicts using Codex, and push a resolution commit back to the PR head branch.
+  - Comment `/resybot` on the PR, optionally followed by extra instructions, for example:
+    - `/resybot merge function x into y and nothing else from PR head`
+  - Resybot will reproduce the merge, attempt to resolve conflicts using Codex (taking your additional instructions into account), and push a resolution commit back to the PR head branch.
 
 For Docker-based setups, CI images, and advanced configuration, see the docs below.
 

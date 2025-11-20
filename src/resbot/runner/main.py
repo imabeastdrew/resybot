@@ -32,6 +32,8 @@ class RunnerConfig:
 	max_repo_mb: int
 	max_exec_seconds: int
 	max_file_mb: int
+	# Optional free-form instructions provided via /resybot issue comments
+	user_prompt: str = ""
 
 
 def read_env_config() -> RunnerConfig:
@@ -57,6 +59,7 @@ def read_env_config() -> RunnerConfig:
 		max_repo_mb=int(os.environ.get("RESBOT_MAX_REPO_MB", "2000")),
 		max_exec_seconds=int(os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600")),
 		max_file_mb=int(os.environ.get("RESBOT_MAX_FILE_MB", "10")),
+		user_prompt=os.environ.get("USER_PROMPT", "") or "",
 	)
 
 
@@ -226,7 +229,9 @@ def setup_conflicted_repo(
 
 	# Telemetry: record exact merge attempt details
 	try:
-		merge_state_dir = out_dir / ".resbot"
+		# Persist merge telemetry outside the Git worktree so it never leaks into
+		# user commits. The /ws volume is mounted for inspection after runs.
+		merge_state_dir = Path("/ws/.resbot")
 		merge_state_dir.mkdir(parents=True, exist_ok=True)
 		telemetry = {
 			"base_sha": base_sha,
@@ -262,41 +267,6 @@ def check_for_conflict_markers(out_dir: Path) -> bool:
 		return len(result.strip()) > 0
 	except subprocess.CalledProcessError:
 		# grep returns non-zero when no matches found
-		return False
-
-
-def _extract_last_code_block(text: str) -> str:
-	"""Return the content of the last fenced code block in 'text', or ''.
-
-	Matches ```<lang>?\n...\n```.
-	"""
-	try:
-		matches = list(re.finditer(r"```(?:[a-zA-Z0-9_+-]+)?\n([\s\S]*?)\n```", text))
-		if not matches:
-			return ""
-		return matches[-1].group(1)
-	except Exception:
-		return ""
-
-
-def try_apply_codex_suggested_content(codex_stdout: str, out_dir: Path, conflicted_paths: set[str]) -> bool:
-	"""If Codex printed a final code block, write it into the single conflicted file.
-
-	Returns True if a write occurred and file exists, else False.
-	"""
-	try:
-		if len(conflicted_paths) != 1:
-			return False
-		candidate = _extract_last_code_block(codex_stdout)
-		if not candidate.strip():
-			return False
-		# Write the suggested content verbatim to the only conflicted file
-		[target_path] = list(conflicted_paths)
-		path = out_dir / target_path
-		path.parent.mkdir(parents=True, exist_ok=True)
-		path.write_text(candidate, encoding="utf-8")
-		return path.exists()
-	except Exception:
 		return False
 
 
@@ -478,6 +448,15 @@ def main() -> None:
 			f"Resolve {num_conflicts} conflicts across {num_conflict_files} files by editing them in place.\n"
 			f"Only edit these files:\n{conflicted_listing}\n"
 		)
+		# If the run was triggered by a /resybot comment with extra instructions,
+		# append that context to the merge prompt to guide the resolution.
+		extra_instructions = (cfg.user_prompt or "").strip()
+		if extra_instructions:
+			merge_prompt = (
+				f"{merge_prompt}\n"
+				f"Additional user instructions from the PR comment:\n"
+				f"{extra_instructions}\n"
+			)
 
 		# Codex integration - run in the conflicted repo (only when conflicts existed)
 		# Before invoking Codex, record the initially conflicted paths so we can
@@ -575,6 +554,9 @@ def main() -> None:
 		# fresh branch forked from the base tip for publishing.
 		git(["config", "user.name", "resbot"], out_dir)
 		git(["config", "user.email", "resbot@noreply.local"], out_dir)
+		# Ensure any in-repo `.resbot` telemetry directory from older runs is not
+		# accidentally committed to the user's repository.
+		shutil.rmtree(out_dir / ".resbot", ignore_errors=True)
 		git(["add", "-A"], out_dir)
 		# After Codex (and staging), ensure merge is resolvable:
 		# - Work tree has no unmerged entries (checked earlier)

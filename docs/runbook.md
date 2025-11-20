@@ -1,9 +1,9 @@
 # Runbook: Rerun / Abort
 
 ## Rerun a job
-- Comment on the PR: `/resbot resolve`
-- Server enqueues a new runner container for that PR.
-- If the PR has no conflicts, the runner exits immediately (no Codex, no push).
+- Comment on the PR: `/resybot` (optionally followed by extra instructions, for example `/resybot merge function x into y and nothing else from PR head`).
+- Server enqueues a new runner container for that PR **only if** the PR is currently conflicted (`mergeable_state == "dirty"`). Any text after `/resybot` is forwarded to the runner and appended to the Codex merge prompt.
+- If the PR has no conflicts (clean), the server skips the run and no new container is started.
 
 ## Abort a running job
 - Stop the runner container on the host (e.g., `docker ps` then `docker stop <id>`)

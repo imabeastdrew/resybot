@@ -3,7 +3,7 @@
 ## Architecture
 
 Resybot uses a git workflow and only acts on conflicted PRs:
-- Server enqueues a run only when the PR `mergeable_state` is `dirty` (conflicts)
+- Server enqueues a run only when a pull request is currently conflicted (`mergeable_state == "dirty"`) **and** a user posts a manual `/resybot ...` issue comment on that PR
 - Runner clones the PR repository directly to `/ws/out` as a real Git working directory
 - Reproduces the merge by checking out the base commit and attempting to merge the head commit
 - If no conflicts are detected, the runner exits immediately (no Codex, no commit/push)
@@ -14,8 +14,7 @@ Resybot uses a git workflow and only acts on conflicted PRs:
 
 - GitHub App receives repository events and forwards them to the Resybot server via webhooks.
 - Server (`resbot-server`) validates the webhook signature using `GITHUB_WEBHOOK_SECRET`.
-- For `pull_request` events, the server fetches the PR using the GitHub App installation token and only enqueues a run when `mergeable_state == "dirty"`.
-- For `issue_comment` events, the server enqueues a run when a user comments `/resbot resolve` on a PR.
+- For `issue_comment` events, the server enqueues a run when a user comments `/resybot ...` on a PR that is currently conflicted (`mergeable_state == "dirty"`). Any text after `/resybot` is forwarded to the runner and appended to the Codex merge prompt as additional instructions.
 - Runner (`resbot-runner`) uses the GitHub App credentials to obtain an installation token, clones the repository into `/ws/out`, reproduces the merge between the base and head SHAs, invokes Codex to resolve conflicts in-place, runs optional hooks, and pushes a resolution commit back to the PR head branch.
 
 ## Components
@@ -173,7 +172,7 @@ ENABLE_NETWORK=true
 
 ## Webhooks
 
-- Events: `pull_request`, `issue_comment`
+- Events: `issue_comment` (you can leave `pull_request` subscribed in GitHub, but the server ignores it)
 
 ### Configuration
 
@@ -182,11 +181,8 @@ ENABLE_NETWORK=true
 
 ### Behavior
 
-- `pull_request`:
-  - Server fetches a fresh copy of the PR via the installation token.
-  - Only when `mergeable_state == "dirty"` (conflicted) does it enqueue a runner; otherwise it skips the event.
 - `issue_comment`:
-  - Comment `/resbot resolve` on a PR to enqueue a run.
+  - Comment `/resybot` (optionally followed by extra instructions) on a PR to enqueue a run.
   - Runner will exit immediately if the PR is clean by the time it executes (no Codex, no push).
 
 ## Logs
