@@ -1,6 +1,6 @@
 ## Resybot
 
-An Agent that automatically resolves merge conflicts in pull requests by reproducing the merge, using Codex to fix conflicts. It only runs on conflicted PRs and pushes a resolution commit back to the PR head branch.
+An Agent that automatically resolves merge conflicts in pull requests using Codex. It only runs on requested conflicted PRs and pushes a resolution commit back to the PR head branch.
 
 ## Development
 This repository is under active development.
