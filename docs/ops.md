@@ -39,7 +39,6 @@ Resybot uses a git workflow and only acts on conflicted PRs:
 - `CODEX_HOME`: Codex config dir (default `/app/codex/config`)
 - `XDG_STATE_HOME`: Codex state dir (default `/app/codex/state`)
 - `RESBOT_RUNNER_IMAGE`: optional override runner image
-- `RESBOT_KEEP_WS`: optional (`true|false`) to keep `/ws` for inspection
 
 ## Build Images
 - make build-server
@@ -110,12 +109,9 @@ See the **Environment Variables** section below for a complete list of required 
 - `GITHUB_APP_ID`: GitHub App ID
 - `GITHUB_PRIVATE_KEY`: PEM contents for the app (server passes contents to runner)
 - `RESBOT_RUNNER_IMAGE`: Docker image for the runner (e.g., `ghcr.io/<org>/resbot-runner:latest`)
-- `RESBOT_MAX_REPO_MB`: soft limit for repository size processed (default `2000`)
-- `RESBOT_MAX_EXEC_SECONDS`: max execution time for runner (default `600`)
 - `CODEX_BIN`: Codex CLI binary (default `codex`)
 - `CODEX_HOME`: Codex config dir (default `/app/codex/config`)
 - `XDG_STATE_HOME`: Codex state dir (default `/app/codex/state`)
-- `RESBOT_KEEP_WS`: optional (`true|false`) to keep `/ws` for inspection
 - `OPENAI_API_KEY`: for Codex non-interactive login
 
 ### Runner environment (injected by the server)
@@ -132,11 +128,6 @@ See the **Environment Variables** section below for a complete list of required 
   - `INSTALLATION_ID`: GitHub App installation ID
   - `GITHUB_APP_ID`: GitHub App ID
   - `GITHUB_PRIVATE_KEY`: PEM contents used to generate an App JWT inside the runner
-
-- Limits:
-  - `RESBOT_MAX_REPO_MB`: soft limit for repository size (MB)
-  - `RESBOT_MAX_EXEC_SECONDS`: max runtime (seconds)
-  - `RESBOT_MAX_FILE_MB`: per-file size cap during copy/processing
 
 - Codex configuration:
   - `CODEX_BIN`: Codex CLI executable
@@ -157,7 +148,6 @@ Enable optional hooks that run after conflict resolution but before committing:
 - `FORMAT_CMD`: Command to format code (e.g., `prettier --write .`, `black .`)
 - `ENABLE_TESTS=true`: Run test suite
 - `TEST_CMD`: Command to run tests (e.g., `npm test`, `pytest`)
-- `ENABLE_NETWORK=true`: Allow network access for dependency installation (required for `ENABLE_DEPS_INSTALL`)
 
 Example for a Node.js project:
 ```
@@ -167,12 +157,11 @@ ENABLE_FORMAT=true
 FORMAT_CMD=prettier --write .
 ENABLE_TESTS=true
 TEST_CMD=npm test -- --ci
-ENABLE_NETWORK=true
 ```
 
 ## Webhooks
 
-- Events: `issue_comment` (you can leave `pull_request` subscribed in GitHub, but the server ignores it)
+- Events: `issue_comment` (you can leave `pull_request` and other events subscribed in GitHub, but the server ignores them)
 
 ### Configuration
 
@@ -183,6 +172,7 @@ ENABLE_NETWORK=true
 
 - `issue_comment`:
   - Comment `/resybot` (optionally followed by extra instructions) on a PR to enqueue a run.
+  - Comments on issues that are not pull requests are ignored (no runner is enqueued).
   - Runner will exit immediately if the PR is clean by the time it executes (no Codex, no push).
 
 ## Logs
@@ -196,7 +186,7 @@ Resybot uses named volumes so you can inspect workspaces and Codex state:
 - `codex_state` → `/app/codex/state` (Codex state/logs)
 - `codex_config` → `/app/codex/config` (Codex config)
 
-By default, the runner cleans up `/ws` at the end of a run unless `RESBOT_KEEP_WS=true`.
+The runner leaves `/ws` intact after each run so you can inspect workspaces; clean up the Docker volume when you no longer need it.
 
 ## Codex configuration
 - `forced_login_method = "api"` to force API key auth in CI

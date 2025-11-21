@@ -22,9 +22,6 @@ class RunnerConfig:
 	installation_id: int
 	github_app_id: str
 	github_private_key: str
-	max_repo_mb: int
-	max_exec_seconds: int
-	max_file_mb: int
 	# Optional free-form instructions provided via /resybot issue comments
 	user_prompt: str = ""
 
@@ -50,9 +47,6 @@ def read_env_config() -> RunnerConfig:
 		installation_id=int(req("INSTALLATION_ID")),
 		github_app_id=req("GITHUB_APP_ID"),
 		github_private_key=req("GITHUB_PRIVATE_KEY"),
-		max_repo_mb=int(os.environ.get("RESBOT_MAX_REPO_MB", "2000")),
-		max_exec_seconds=int(os.environ.get("RESBOT_MAX_EXEC_SECONDS", "600")),
-		max_file_mb=int(os.environ.get("RESBOT_MAX_FILE_MB", "10")),
 		user_prompt=os.environ.get("USER_PROMPT", "") or "",
 	)
 

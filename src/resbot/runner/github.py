@@ -9,7 +9,8 @@ import requests
 def create_app_jwt(app_id: str, private_key: str) -> str:
 	"""Create a short-lived JWT used to request an installation token."""
 	claims = {"iat": int(time()) - 60, "exp": int(time()) + 540, "iss": app_id}
-	if "BEGIN" in private_key and "\\n" not in private_key and "\n" not in private_key:
+	# Handle PEM keys provided with literal "\n" sequences instead of newlines.
+	if "BEGIN" in private_key and "\\n" in private_key and "\n" not in private_key:
 		private_key = private_key.replace("\\n", "\n")
 	return jwt.encode(claims, private_key, algorithm="RS256")
 
@@ -56,23 +57,5 @@ class GitHubClient:
 		url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments"
 		resp = requests.post(url, json={"body": body}, headers=self._headers)
 		resp.raise_for_status()
-
-	def create_pull_request(
-		self,
-		title: str,
-		head: str,
-		base: str,
-		body: str,
-	) -> Dict[str, Any]:
-		"""Open a PR from our resolution branch into the base branch."""
-		owner, repo = self._owner_repo
-		url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
-		resp = requests.post(
-			url,
-			json={"title": title, "head": head, "base": base, "body": body},
-			headers=self._headers,
-		)
-		resp.raise_for_status()
-		return resp.json()
 
 

@@ -23,26 +23,6 @@ def git(cmd: List[str], repo_dir: Path) -> str:
 	return run(["git", *cmd], cwd=repo_dir)
 
 
-def compute_shas(repo_dir: Path, base_ref: str, head_ref: str) -> Tuple[str, str, str]:
-	"""Resolve base/head SHAs and their merge base, deepening history if needed."""
-	base_sha = git(["rev-parse", f"origin/{base_ref}"], repo_dir)
-	head_sha = git(["rev-parse", f"origin/{head_ref}"], repo_dir)
-	try:
-		merge_base = git(["merge-base", f"origin/{base_ref}", f"origin/{head_ref}"], repo_dir)
-	except subprocess.CalledProcessError:
-		# Shallow history may not include a common ancestor; deepen and retry
-		try:
-			git(["fetch", "origin", "--deepen", "1000000"], repo_dir)
-		except subprocess.CalledProcessError:
-			# Fallback to full unshallow if supported
-			try:
-				git(["fetch", "--unshallow"], repo_dir)
-			except subprocess.CalledProcessError:
-				pass
-		merge_base = git(["merge-base", f"origin/{base_ref}", f"origin/{head_ref}"], repo_dir)
-	return base_sha, head_sha, merge_base
-
-
 def setup_conflicted_repo(
 	clone_url_with_token: str,
 	out_dir: Path,
@@ -182,11 +162,13 @@ def setup_conflicted_repo(
 def check_for_conflict_markers(out_dir: Path) -> bool:
 	"""Check if any conflict markers remain in the repository."""
 	try:
-		result = run(
-			["grep", "-r", "-l", "-E", "^<<<<<<<|^=======|^>>>>>>>"],
+		# Use grep -q so we only care about the exit code, not the matched paths.
+		run(
+			["grep", "-r", "-q", "-E", "^<<<<<<<|^=======|^>>>>>>>"],
 			cwd=out_dir,
 		)
-		return len(result.strip()) > 0
+		# Exit code 0 means at least one match (conflict marker) was found.
+		return True
 	except subprocess.CalledProcessError:
 		# grep returns non-zero when no matches found
 		return False

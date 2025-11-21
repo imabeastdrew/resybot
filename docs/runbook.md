@@ -12,8 +12,8 @@
 ## Common issues
 - 401 from webhook: verify `GITHUB_WEBHOOK_SECRET` matches the GitHub App setting.
 - 403 from GitHub API: verify installation exists on target repo and app permissions.
-- Clone failures: repo is large or rate limited; increase `RESBOT_MAX_EXEC_SECONDS` or retry.
-- Nothing happens on comment: PR is clean; only conflicted PRs are processed. Verify PR `mergeable_state` is `dirty`.
+- Clone failures: repo is large or rate limited; retry or adjust server/container timeouts.
+- Nothing happens on comment: PR is clean or the comment is not on a pull request; only conflicted PRs are processed. Verify PR `mergeable_state` is `dirty` and that you commented on the PR, not on a regular issue.
 
 ## Where to find artifacts (local docker)
 - Workspace: volume `resbot_ws` mounted at `/ws`
