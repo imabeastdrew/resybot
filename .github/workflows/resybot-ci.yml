@@ -1,0 +1,85 @@
+name: Resybot
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  run-resybot:
+    if: >
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/resybot')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install resbot
+        run: |
+          pip install --upgrade pip
+          pip install resbot
+
+      - name: Fetch PR metadata
+        id: pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.issue.number }}"
+          REPO="${{ github.repository }}"
+          pr_json="$(curl -sS -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR_NUMBER}")"
+          echo "pr_json=${pr_json}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract base/head context
+        id: ctx
+        run: |
+          pr_json='${{ steps.pr.outputs.pr_json }}'
+          base_ref="$(echo "$pr_json" | python -c 'import json,sys; j=json.load(sys.stdin); print(j["base"]["ref"])')"
+          head_ref="$(echo "$pr_json" | python -c 'import json,sys; j=json.load(sys.stdin); print(j["head"]["ref"])')"
+          base_sha="$(echo "$pr_json" | python -c 'import json,sys; j=json.load(sys.stdin); print(j["base"]["sha"])')"
+          head_sha="$(echo "$pr_json" | python -c 'import json,sys; j=json.load(sys.stdin); print(j["head"]["sha"])')"
+          head_clone_url="$(echo "$pr_json" | python -c 'import json,sys; j=json.load(sys.stdin); print(j["head"]["repo"]["clone_url"])')"
+          mergeable_state="$(echo "$pr_json" | python -c 'import json,sys; j=json.load(sys.stdin); print(j.get("mergeable_state",""))')"
+
+          echo "base_ref=${base_ref}" >> "$GITHUB_OUTPUT"
+          echo "head_ref=${head_ref}" >> "$GITHUB_OUTPUT"
+          echo "base_sha=${base_sha}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${head_sha}" >> "$GITHUB_OUTPUT"
+          echo "head_clone_url=${head_clone_url}" >> "$GITHUB_OUTPUT"
+          echo "mergeable_state=${mergeable_state}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if no conflicts
+        if: steps.ctx.outputs.mergeable_state != 'dirty'
+        run: |
+          echo "PR is not in a dirty (conflicted) state; skipping resybot."
+
+      - name: Run resbot-runner
+        if: steps.ctx.outputs.mergeable_state == 'dirty'
+        env:
+          REPO_FULL: ${{ github.repository }}
+          CLONE_URL: ${{ github.event.repository.clone_url }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          BASE_REF: ${{ steps.ctx.outputs.base_ref }}
+          HEAD_REF: ${{ steps.ctx.outputs.head_ref }}
+          BASE_SHA: ${{ steps.ctx.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+          HEAD_CLONE_URL: ${{ steps.ctx.outputs.head_clone_url }}
+          # Auth: use CI token mode
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Codex / OpenAI (must be configured in repo/org secrets)
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          resbot-runner
+
+

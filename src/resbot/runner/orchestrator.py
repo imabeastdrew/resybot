@@ -285,9 +285,28 @@ def _post_success_comment(
 	github_client.post_pr_comment(cfg.pr_number, comment)
 
 
+def _resolve_github_token(cfg: RunnerConfig) -> str:
+	"""Resolve the GitHub token used for API and Git operations.
+
+	Preference order:
+	- When GITHUB_TOKEN is set, use it directly (Actions/CI mode).
+	- Otherwise, fall back to a GitHub App installation token derived from
+	  GITHUB_APP_ID / GITHUB_PRIVATE_KEY / INSTALLATION_ID.
+	"""
+	direct_token = os.environ.get("GITHUB_TOKEN", "").strip()
+	if direct_token:
+		return direct_token
+
+	return get_installation_token(
+		cfg.github_app_id,
+		cfg.github_private_key,
+		cfg.installation_id,
+	)
+
+
 def run_orchestration(cfg: RunnerConfig) -> None:
 	"""End-to-end flow: reproduce merge, run LLM, validate, publish resolution."""
-	token = get_installation_token(cfg.github_app_id, cfg.github_private_key, cfg.installation_id)
+	token = _resolve_github_token(cfg)
 	github_client = GitHubClient(token=token, repo_full=cfg.repo_full)
 
 	clone_url_with_token = cfg.clone_url.replace(

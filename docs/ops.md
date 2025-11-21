@@ -138,6 +138,21 @@ See the **Environment Variables** section below for a complete list of required 
 - Workspace toggle:
   - `RESBOT_KEEP_WS`: when `true`, runner does not delete `/ws` on exit
 
+### Runner authentication modes
+
+The runner supports two authentication modes:
+
+- GitHub App mode (default):
+  - Used when `GITHUB_TOKEN` is **not** set.
+  - Requires: `INSTALLATION_ID`, `GITHUB_APP_ID`, and `GITHUB_PRIVATE_KEY`.
+  - This is the mode used when the server enqueues a run in response to GitHub App webhooks.
+
+- GitHub Actions / CI token mode:
+  - Used when `GITHUB_TOKEN` is set in the environment.
+  - The runner uses `GITHUB_TOKEN` directly for Git operations and REST API calls.
+  - GitHub App credentials become optional (they are ignored for auth if `GITHUB_TOKEN` is present).
+  - This mode is recommended when invoking `resbot-runner` directly from a GitHub Actions workflow.
+
 ### Post-Resolution Hooks (all default OFF)
 
 Enable optional hooks that run after conflict resolution but before committing:
@@ -187,6 +202,78 @@ Resybot uses named volumes so you can inspect workspaces and Codex state:
 - `codex_config` → `/app/codex/config` (Codex config)
 
 The runner leaves `/ws` intact after each run so you can inspect workspaces; clean up the Docker volume when you no longer need it.
+
+## GitHub Actions / CI integration
+
+While the GitHub App + server remains the primary integration path, you can also
+run the `resbot-runner` CLI directly from GitHub Actions. This is useful if you
+prefer to avoid running the webhook server and instead drive Resybot entirely
+from CI.
+
+At a high level:
+
+- Trigger a workflow (for example) on `issue_comment` or `workflow_dispatch`.
+- Ensure the workflow only proceeds when:
+  - the event is associated with a pull request, and
+  - the comment body starts with `/resybot` (to match the server behavior).
+- Populate the same environment variables the server would inject:
+  - `REPO_FULL`, `CLONE_URL`, `PR_NUMBER`
+  - `BASE_REF` / `HEAD_REF`
+  - `BASE_SHA` / `HEAD_SHA`
+  - `HEAD_CLONE_URL` (for fork PRs)
+- Set `GITHUB_TOKEN` (provided by Actions) and Codex/OpenAI env vars.
+- Install `resbot` and invoke `resbot-runner`.
+
+Example (simplified) workflow snippet:
+
+```yaml
+name: Resybot (CI)
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  run-resybot:
+    if: >
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/resybot')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install resbot
+        run: |
+          pip install resbot  # or your published wheel / image
+
+      - name: Prepare env and run resbot-runner
+        env:
+          REPO_FULL: ${{ github.repository }}
+          CLONE_URL: ${{ github.event.repository.clone_url }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          # For issue_comment events you typically fetch the PR JSON using
+          # the GitHub API to fill in BASE_REF/HEAD_REF/BASE_SHA/HEAD_SHA and
+          # HEAD_CLONE_URL, mirroring what the server does.
+          # Auth:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Codex / OpenAI:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          resbot-runner
+```
+
+The example above is intentionally high-level: in practice you will add a small
+step that calls the GitHub REST API (e.g., via `curl` or `gh api`) to resolve
+the PR's base/head refs and SHAs, then export them as environment variables
+before running `resbot-runner`. The runner will then behave exactly as it does
+when spawned by the server: clone the repository, reproduce the merge, and only
+invoke Codex when real conflicts are present.
 
 ## Codex configuration
 - `forced_login_method = "api"` to force API key auth in CI

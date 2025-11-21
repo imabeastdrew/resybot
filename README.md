@@ -5,6 +5,11 @@ An Agent that automatically resolves merge conflicts in pull requests by reprodu
 ## Development
 This repository is under active development.
 
+You can already use Resybot from CI by running the `resbot-runner` CLI inside
+GitHub Actions (see the **GitHub Actions / CI integration** section in
+[`docs/ops.md`](docs/ops.md)). The GitHub App + webhook server integration is
+still evolving, but the core runner is stable enough for experimental CI usage.
+
 ## Installation
 
 Resybot is not yet published to PyPI, nor the GitHub Marketplace. For now, install from source:
