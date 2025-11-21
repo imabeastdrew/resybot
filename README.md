@@ -3,7 +3,6 @@
 An Agent that resolves merge conflicts in pull requests using Codex. It only runs on requested conflicted PRs and pushes a resolution commit back to the PR head branch.
 
 ## Development
-This repository is under active development.
 
 You can already use Resybot from CI by running the `resbot-runner` CLI inside
 GitHub Actions (see the **GitHub Actions / CI integration** section in
